@@ -25,6 +25,6 @@ export default{
 
 <style scoped>
      .tmpl{
-         color:skyblue ;
+         /* color:skyblue ; */
      }
 </style>

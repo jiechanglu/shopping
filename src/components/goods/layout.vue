@@ -10,7 +10,7 @@
                         <a target="_blank" href="#"></a>
                     </div>
                     <div id="menu" class="right-box">
-                        <a href="/login.html">登录</a>
+                        <router-link to="/site/login">登录</router-link>
                         <a href="/register.html">注册</a>
                         <strong>|</strong>
                         <!-- <a href="/content/contact.html"><i class="iconfont icon-phone"></i>联系我们</a>

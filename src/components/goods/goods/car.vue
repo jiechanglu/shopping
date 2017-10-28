@@ -52,24 +52,26 @@
                                 </tr>
                                 <tr v-for="(item,index) in goodslist" :key="item.id">
                                     <td width="48" align="center">
-                                        <el-switch on-text="反选" off-text="全选" v-model="values[index]" @click="changesel"></el-switch>
+                                        <el-switch on-text="反选" off-text="全选" v-model="values[index]" @change="changesel"></el-switch>
                                     </td>
                                     <!-- <td align="left" colspan="2" v-text="item.title">商品信息</td> -->
                                     <td align="left" colspan="2"><img :src="item.img_url" style="float:left;display:inline-block;" width="50" alt="">
                                         <p style="float:left;line-height:50px;padding-left:5px;">{{item.title}}</p>
                                     </td>
                                     <td width="84" align="left" v-text="item.sell_price">单价</td>
-                                    <td width="124" align="center" >
+                                    <td width="124" align="center">
                                         <!-- 数量 -->
                                         <ul class="ul" style="list-style:none;">
-                                            <el-button type="danger" style="padding:5px 0px;width:25px;" @click="item.buycount--" :disabled="item.buycount<=0">-</el-button><el-button type="success" style="width:45px;padding:5px 0px;color:white;" v-text="item.buycount"></el-button ><el-button type="primary" style="width:25px;padding:5px 0px;" @click="item.buycount++">+</el-button>
+                                            <el-button type="danger" style="padding:5px 0px;width:25px;" @click="item.buycount--" :disabled="item.buycount<=0">-</el-button>
+                                            <el-button type="success" style="width:45px;padding:5px 0px;color:white;" v-text="item.buycount"></el-button>
+                                            <el-button type="primary" style="width:25px;padding:5px 0px;" @click="item.buycount++">+</el-button>
                                         </ul>
 
-                                        
+
                                     </td>
                                     <td width="104" align="left">{{item.sell_price * item.buycount}}(元)</td>
                                     <td width="54" align="center">
-                                        <el-button type="danger" size="mini" @click="delitem">删除</el-button>
+                                        <el-button type="danger" size="small" @click="delitem(item.id)">删除</el-button>
                                     </td>
                                 </tr>
                                 <tr v-if="goodslist.length<=0">
@@ -85,7 +87,8 @@
                                 </tr>
                                 <tr>
                                     <th align="right" colspan="8">
-                                        已选择商品 <b class="red" id="totalQuantity" v-text="selectCount"></b> 件 &nbsp;&nbsp;&nbsp; 商品总金额（不含运费）：
+                                        已选择商品 <b class="red" id="totalQuantity" v-text="selectCount"></b> 件 &nbsp;&nbsp;&nbsp;
+                                        商品总金额（不含运费）：
                                         <span class="red">￥</span><b class="red" id="totalAmount">{{selletmentAmount}}</b>元
                                     </th>
                                 </tr>
@@ -97,7 +100,9 @@
                     <div class="cart-foot clearfix">
                         <div class="right-box">
                             <button class="button" onclick="javascript:location.href='/index.html';">继续购物</button>
-                            <button class="submit" onclick="formSubmit(this, '/', '/shopping.html');">立即结算</button>
+                            <router-link to="/site/shopping">
+                                <el-button type="info">立即结算</el-button>
+                            </router-link>
                         </div>
                     </div>
                     <!--购物车底部-->
@@ -109,12 +114,12 @@
 
 <script>
     // 引入 setItem从localStorageKit.js中
-    import { getItem,setItem,removeItem } from '../../../kit/localStorageKit.js'
+    import { getItem, setItem, removeItem } from '../../../kit/localStorageKit.js'
     export default {
         data() {
             return {
-                btntype:'success',
-                alltext:'全选',
+                btntype: 'success',
+                alltext: '全选',
                 // disabled:false,
                 goodslist: [
                     // {
@@ -126,14 +131,15 @@
                     // },
                 ],
                 values: [],
-                selectCount:0,//被选中的商品
-                currentid:0
+                selectCount: 0,//被选中的商品
+                currentid: 0,
+                total: 0
             }
         },
-        computed:{
-            selletmentAmount(){
+        computed: {
+            selletmentAmount() {
                 // 获取到所有被选到的购物车商品
-                var trueArr = this.values.filter(function(item){
+                var trueArr = this.values.filter(function (item) {
                     return item;
                 })
                 this.selectCount = trueArr.length;
@@ -142,36 +148,55 @@
 
                 var selArr = [];
 
-                this.values.forEach(function(item,index) {
+                var selgoodsArr = [];
+                var _this = this;
+                this.values.forEach(function (item, index) {
                     var goodsObj = {};
+                    var selgoodsObj = {};
                     this.currentid = this.goodslist[index].id;
                     removeItem(this.goodslist[index].id);
-                    setItem({gid:this.goodslist[index].id,bcount:this.goodslist[index].buycount});
-                    if(item){
+                    setItem({ gid: this.goodslist[index].id, bcount: this.goodslist[index].buycount });
+                    if (item) {
+                        // alert(this.goodslist[index].buycount);
                         selArr.push(this.goodslist[index]);
-                        totalAmount += this.goodslist[index].sell_price*this.goodslist[index].buycount;
+                        selgoodsObj[(this.goodslist[index].id)] = this.goodslist[index].buycount;
+                        totalAmount += this.goodslist[index].sell_price * this.goodslist[index].buycount;
+                        selgoodsArr.push(selgoodsObj);
+                        // alert(totalAmount);
                     }
                 }, this);
-                // setItem();
+                // 把选中的商品存储到localStorage中
+                if (selgoodsArr.length > 0) {
+                    // console.log(111222);
+                    localStorage.setItem('selgoodsArr', JSON.stringify(selgoodsArr));
+                }
+                // 这里要最后才能返回
                 return totalAmount;
-
             },
-            
         },
         mounted() {
             this.getdata();
-            
         },
         methods: {
-            delitem(){
-                alert('确定要删除');
-                var id = this.currentid;
-                removeItem(id);
-                // this.$router.push({ name: 'car' });
-                // window.location.href = 'http://127.0.0.1:7071/#/site/car';
-                window.location.reload();
+            delitem(goodid) {
+                var idx = -1;
+                this.goodslist.forEach(function(item,index){
+                    for (var key in item) {
+                        if (goodid == item.id) {
+                            idx = index;
+                        }
+                    }
+                });
+                alert(idx);
+                this.goodslist.splice(idx,1);
+                this.values.splice(idx,1);
+                // console.log(this.goodslist);
+                removeItem(goodid);
+                // 下面重新触发dispatch方法是为了同步layout上面的显示数量
+                this.$store.dispatch('changeButCountmapActions');
+                // this.getdata();
             },
-            changesel(){
+            changesel(val) {
                 Array.prototype.contains = function (obj) {
                     var i = this.length;
                     while (i--) {
@@ -181,15 +206,22 @@
                     }
                     return false;
                 }
-                if(this.values.contains(false)){
+                if (this.values.contains(false)) {
                     this.alltext = '全选';
                     this.btntype = 'success';
+                }
+                if (!val) {
+                    this.alltext = '全选';
+                    this.btntype = 'success';
+                }
+                if (!this.values.contains(false)) {
+                    this.alltext = '反选';
+                    this.btntype = 'danger';
                 }
             },
             // 全选
             allsel() {
                 // console.log(this.values);
-
                 Array.prototype.contains = function (obj) {
                     var i = this.length;
                     while (i--) {
@@ -206,11 +238,11 @@
                         this.values[i] = true;
                     }
                     this.alltext = '反选';
-                    this.btntype = 'warning';
+                    this.btntype = 'danger';
                     // 下面要想即时见到触发变化效果，必须得假装编辑数组，先添加一个再删除才能有即时效果
                     this.values.push(false);
                     this.values.pop();
-                }else{
+                } else {
                     for (var i = 0; i < this.values.length; i++) {
                         this.values[i] = false;
                     }
@@ -231,21 +263,22 @@
                 }
                 var ids = idArr.join(',');
                 console.log(goodsObj);
-                this.$http.get('/site/comment/getshopcargoods/' + ids).then(res => {
-                    this.goodslist = res.data.message;
-                    var couArr = [];
-                    for (var key in goodsObj) {
-                        couArr.push(goodsObj[key]);
-                        this.values.push(false);
-                    }
-                    this.goodslist.forEach(function (item, index) {
-                        item.buycount = couArr[index];
-                    }, this);
-                    // console.log(this.goodslist)
-                    // console.log(couArr);
-                    // 2.0 根据返回的数组个数初始化values数组的个数，值 全部是false
-
-                })
+                if (ids) {
+                    this.$http.get('/site/comment/getshopcargoods/' + ids).then(res => {
+                        this.goodslist = res.data.message;
+                        var couArr = [];
+                        for (var key in goodsObj) {
+                            couArr.push(goodsObj[key]);
+                            this.values.push(false);
+                        }
+                        this.goodslist.forEach(function (item, index) {
+                            item.buycount = couArr[index];
+                        }, this);
+                        // console.log(this.goodslist)
+                        // console.log(couArr);
+                        // 2.0 根据返回的数组个数初始化values数组的个数，值 全部是false
+                    })
+                }
             }
         }
     }
@@ -256,7 +289,7 @@
     /* @import url('../../../../statics/site/js/jqplugins/imgzoom/css/magnifier.css'); */
 
     @import url('../../../../statics/site/js/jqplugins/imgzoom/css/magnifier.css');
-    .ul .el-button+.el-button{
+    .ul .el-button+.el-button {
         margin-left: 2px;
     }
 </style>

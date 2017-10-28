@@ -9,6 +9,12 @@ import vuex from 'vuex';
 //将vuex绑定到Vue对象中
 Vue.use(vuex); 
 
+// 3.0 使用elementUI这个ui框架的步骤
+// 3.1 导包
+import elementUI from 'element-ui';
+// 3.2 忖入elementui的css控制样式
+import 'element-ui/lib/theme-default/index.css';
+
 // 路由包：
 // 导入路由包
 import vueRouter from 'vue-router';
@@ -20,6 +26,11 @@ import layout from './components/goods/layout.vue'
 import goodslist from './components/goods/goods/goodslist.vue'
 import goodsinfo from './components/goods/goods/goodsinfo.vue'
 import car from './components/goods/goods/car.vue'
+import login from './components/goods/goods/login.vue'
+import shopping from './components/goods/goods/shopping.vue'
+import pay from './components/goods/goods/pay.vue'
+import paysuccess from './components/goods/goods/paysuccess.vue'
+import payamount from './components/goods/goods/payamount.vue'
 
 var router = new vueRouter({
     routes: [
@@ -30,12 +41,40 @@ var router = new vueRouter({
             component: layout,
             children: [
                 { name: 'goodslist', path: 'goodslist', component: goodslist },
-                { name: 'goodsinfo', path:'goodsinfo/:goodsid', component: goodsinfo },
-                { name: 'car', path:'car', component: car }
+                { name: 'shopping', path: 'shopping', component: shopping,meta:{islogin:true}},
+                { name: 'goodsinfo', path:'goodsinfo/:goodsid', component: goodsinfo},
+                { name: 'car', path:'car', component: car,},
+                { name: 'login', path: 'login', component: login },
+                { name: 'pay', path: 'pay', component: pay },
+                { name: 'paysuccess', path: 'paysuccess', component: paysuccess },
+                { name: 'payamount', path: 'payamount/:orderid/:amount', component: payamount },
             ]
         },
     ]
 });
+
+
+// 全局守卫beforeEach函数，来判断是否需要登录
+router.beforeEach((to,from,next)=>{
+    // 从路由规则中to 是否存在meta对象，并且 islogin为true时，需要登录验证
+    if(to.name != 'login'){
+        localStorage.setItem('oldPath',to.name);
+    }
+    if(to.meta.islogin){
+        axios.get('/site/account/islogin').then(res=>{
+            if(res.data.code == 'logined'){
+                console.log(222);
+                next();
+            }else{
+                router.push({name:'login'});
+            }
+        })
+    }else{
+        next();
+    }
+})
+
+
 
 // 2.axios的使用
 // 2.1导入axios包
@@ -53,11 +92,7 @@ axios.defaults.withCredentials = true;
 Vue.use(axios);
 
 
-// 3.0 使用elementUI这个ui框架的步骤
-// 3.1 导包
-import elementUI from 'element-ui';
-// 3.2 忖入elementui的css控制样式
-import 'element-ui/lib/theme-default/index.css';
+
 
 // 从site.css中导入css文件
 require('../statics/site/css/css/style.css');
